@@ -1,6 +1,24 @@
 # auto_regex
 regex automated
 
+# install
+
+install from pip
+
+       pip install auto_regex
+    
+or install from github with pip
+
+        pip install git+https://github.com/JarbasAl/auto_regex
+           
+or install from source
+
+        git clone https://github.com/JarbasAl/auto_regex
+        cd auto_regex
+        python setup.py install
+        
+or just bundle the python file with your project, it is standalone
+        
 # usage
 
 importing the module
