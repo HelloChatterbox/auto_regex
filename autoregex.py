@@ -12,6 +12,35 @@ class AutoRegex(object):
         self.must_compile = True
         self.regex_lines.append(lines)
 
+    def get_expressions(self, lines):
+        regexes = []
+        for line in lines:
+            regexes.append(self._create_regex_pattern(line))
+        return regexes
+
+    def get_entities(self, query):
+        if self.must_compile:
+            self._compile()
+        for regexes in self.regexes:
+            entities = list(self._calc_entities(query, regexes))
+            if entities:
+                yield min(entities, key=lambda x: sum(map(len, x.values())))
+
+    def get_matches(self, query):
+        if self.must_compile:
+            self._compile()
+        for regexes in self.regexes:
+            entities = self._calc_matches(query, regexes)
+            regex = [str(r).replace("re.compile('", "") \
+                         .replace("', re.IGNORECASE)", "") \
+                         .replace("\\\\", "\\") for r in regexes]
+            for ent in entities:
+                yield {
+                    'query': query,
+                    'entities': ent,
+                    'regexes': regex
+                }
+
     def _create_pattern(self, line):
         for pat, rep in (
                 # === Preserve Plain Parentheses ===
@@ -79,12 +108,6 @@ class AutoRegex(object):
             if line.strip()
         ]
 
-    def get_regexes(self, lines):
-        regexes = []
-        for line in lines:
-            regexes.append(self._create_regex_pattern(line))
-        return regexes
-
     def _compile(self):
         self.entities = {
             ent_name: r'({})'.format('|'.join(
@@ -113,27 +136,4 @@ class AutoRegex(object):
                 yield {
                     k.rsplit('__', 1)[0]: v
                     for k, v in match.groupdict().items() if v
-                }
-
-    def calc_entities(self, query):
-        if self.must_compile:
-            self._compile()
-        for regexes in self.regexes:
-            entities = list(self._calc_entities(query, regexes))
-            if entities:
-                yield min(entities, key=lambda x: sum(map(len, x.values())))
-
-    def calc_matches(self, query):
-        if self.must_compile:
-            self._compile()
-        for regexes in self.regexes:
-            entities = self._calc_matches(query, regexes)
-            regex = [str(r).replace("re.compile('", "") \
-                         .replace("', re.IGNORECASE)", "") \
-                         .replace("\\\\", "\\") for r in regexes]
-            for ent in entities:
-                yield {
-                    'query': query,
-                    'entities': ent,
-                    'regexes': regex
                 }

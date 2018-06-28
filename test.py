@@ -8,7 +8,7 @@ class TestAutoRegex(unittest.TestCase):
     def test_get_regex(self):
         def _test_get_regex(line, expected):
             a = AutoRegex()
-            r = a.get_regexes([line])[0]
+            r = a.get_expressions([line])[0]
             self.assertEqual(r, expected)
 
         _test_get_regex("say {word}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
@@ -23,7 +23,7 @@ class TestAutoRegex(unittest.TestCase):
                 lines = [lines]
             a = AutoRegex()
             a.create_regex(lines)
-            for e in a.calc_entities(query):
+            for e in a.get_entities(query):
                 self.assertEqual(e, expected)
 
         _test_get_entities("say hello", "say {word}",
@@ -46,7 +46,7 @@ class TestAutoRegex(unittest.TestCase):
                 lines = [lines]
             a = AutoRegex()
             a.create_regex(lines)
-            for e in a.calc_matches(query):
+            for e in a.get_matches(query):
                 self.assertEqual(e, expected)
 
         _test_get_matches("say hello", "say {word}",

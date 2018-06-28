@@ -30,7 +30,7 @@ importing the module
 generating a regex expression
 
     texts = ["say {word}", "repeat {word}"]
-    for regex_expression in a.get_regexes(texts):
+    for regex_expression in a.get_expressions(texts):
       print(regex_expression)
  
  outputs
@@ -44,7 +44,7 @@ extracting entities from regex
       lines= ["say {word}", "repeat {word}"]
       query = "say hello"
       a.create_regex(lines)
-      for ent in a.calc_entities(query):
+      for ent in a.get_entities(query):
           print(ent)
           
 outputs
@@ -57,7 +57,7 @@ matching regexes
       lines= ["say {word}", "repeat {word}"]
       query = "say i am a bot, blip blop"
       a.create_regex(lines)
-          for e in a.calc_matches(query):
+          for e in a.get_matches(query):
               print(e)
               
 outputs
