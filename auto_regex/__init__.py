@@ -20,7 +20,7 @@ class AutoRegex(object):
 
     def get_entities(self, query):
         if self.must_compile:
-            self._compile()
+            self._compile_regex()
         for regexes in self.regexes:
             entities = list(self._calc_entities(query, regexes))
             if entities:
@@ -28,7 +28,7 @@ class AutoRegex(object):
 
     def get_matches(self, query):
         if self.must_compile:
-            self._compile()
+            self._compile_regex()
         for regexes in self.regexes:
             entities = self._calc_matches(query, regexes)
             regex = [str(r).replace("re.compile('", "") \
@@ -108,7 +108,7 @@ class AutoRegex(object):
             if line.strip()
         ]
 
-    def _compile(self):
+    def _compile_regex(self):
         self.entities = {
             ent_name: r'({})'.format('|'.join(
                 self._create_pattern(line) for line in lines if line.strip()

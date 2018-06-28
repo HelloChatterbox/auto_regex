@@ -1,6 +1,6 @@
 import unittest
 
-from autoregex import AutoRegex
+from auto_regex import AutoRegex
 
 
 class TestAutoRegex(unittest.TestCase):
