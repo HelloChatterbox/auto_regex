@@ -17,8 +17,8 @@ generating a regex expression
  
  outputs
  
-    ^\W*say\W*(?P<word__0>.*?\w.*?)\W*$
-    ^\W*repeat\W*(?P<word__1>.*?\w.*?)\W*$
+    ^\W*say\W*(?P<word>.*?\w.*?)\W*$
+    ^\W*repeat\W*(?P<word>.*?\w.*?)\W*$
 
 
 extracting entities from regex
@@ -47,7 +47,7 @@ outputs
       {
         'query': 'say i am a bot, blip blop', 
         'entities': {'word': 'i am a bot, blip blop'}, 
-        'regex': '^\\W*repeat\\W*(?P<word__0>.*?\\w.*?)\\W*$'
+        'regex': '^\\W*repeat\\W*(?P<word>.*?\\w.*?)\\W*$'
       }
 
     
