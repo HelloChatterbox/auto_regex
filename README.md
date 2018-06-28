@@ -65,7 +65,7 @@ outputs
       {
         'query': 'say i am a bot, blip blop', 
         'entities': {'word': 'i am a bot, blip blop'}, 
-        'regex': '^\\W*repeat\\W*(?P<word>.*?\\w.*?)\\W*$'
+        'regexes': ['^\\W*repeat\\W*(?P<word>.*?\\w.*?)\\W*$']
       }
 
     

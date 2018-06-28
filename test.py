@@ -52,20 +52,21 @@ class TestAutoRegex(unittest.TestCase):
         _test_get_matches("say hello", "say {word}",
                           {'entities': {"word": "hello"},
                            'query': 'say hello',
-                           'regex': '^\W*say\W*(?P<word>.*?\w.*?)\W*$'
+                           'regexes': ['^\W*say\W*(?P<word>.*?\w.*?)\W*$']
                            }
                           )
         _test_get_matches("I a going to a party tomorrow tonight",
                           "I am going to {place} tomorrow night",
                           {'entities': {"place": "a party"},
                            'query': 'I a going to a party tomorrow tonight',
-                           'regex': '^\W*I\W+am\W+going\W+to\W*(?P<place>.*?\w.*?)\W*tomorrow\W+night\W*$'
+                           'regexes': [
+                               '^\W*I\W+am\W+going\W+to\W*(?P<place>.*?\w.*?)\W*tomorrow\W+night\W*$']
                            }
                           )
         _test_get_matches("say blip blop, i am a bot", "say {word}",
                           {'entities': {"word": "blip blop, i am a bot"},
                            'query': 'say blip blop, i am a bot',
-                           'regex': '^\W*say\W*(?P<word>.*?\w.*?)\W*$'
+                           'regexes': ['^\W*say\W*(?P<word>.*?\w.*?)\W*$']
                            }
                           )
 

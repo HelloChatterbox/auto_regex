@@ -128,13 +128,12 @@ class AutoRegex(object):
             self._compile()
         for regexes in self.regexes:
             entities = self._calc_matches(query, regexes)
-            regex = str(regexes[0]) \
-                .replace("re.compile('", "") \
-                .replace("', re.IGNORECASE)", "") \
-                .replace("\\\\", "\\")
+            regex = [str(r).replace("re.compile('", "") \
+                         .replace("', re.IGNORECASE)", "") \
+                         .replace("\\\\", "\\") for r in regexes]
             for ent in entities:
                 yield {
                     'query': query,
                     'entities': ent,
-                    'regex': regex
+                    'regexes': regex
                 }
