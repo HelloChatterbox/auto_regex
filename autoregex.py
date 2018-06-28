@@ -62,9 +62,9 @@ class AutoRegex(object):
         line = self._create_pattern(line)
         replacements = {}
         for ent_name in set(re.findall(r'{([a-z_:]+)}', line)):
-            replacements[ent_name] = r'(?P<{}__{{}}>.*?\w.*?)'.format(ent_name)
+            replacements[ent_name] = r'(?P<{}>.*?\w.*?)'.format(ent_name)
         for ent_name, ent in self.entities.items():
-            ent_regex = r'(?P<{}__{{}}>{})'
+            ent_regex = r'(?P<{}>{})'
             replacements[ent_name] = ent_regex.format(
                 ent_name.replace(':', '__colon__'), ent)
         for key, value in replacements.items():
