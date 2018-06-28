@@ -11,11 +11,11 @@ class TestAutoRegex(unittest.TestCase):
             r = a.get_regexes([line])[0]
             self.assertEqual(r, expected)
 
-        _test_get_regex("say {word}", "^\W*say\W*(?P<word__0>.*?\w.*?)\W*$")
+        _test_get_regex("say {word}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
         _test_get_regex("{word} is the answer",
-                        "^\W*(?P<word__0>.*?\w.*?)\W*is\W+the\W+answer\W*$")
+                        "^\W*(?P<word>.*?\w.*?)\W*is\W+the\W+answer\W*$")
         _test_get_regex("weather in {city} tomorrow",
-                        "^\W*weather\W+in\W*(?P<city__0>.*?\w.*?)\W*tomorrow\W*$")
+                        "^\W*weather\W+in\W*(?P<city>.*?\w.*?)\W*tomorrow\W*$")
 
     def test_get_entities(self):
         def _test_get_entities(query, lines, expected):
@@ -52,20 +52,20 @@ class TestAutoRegex(unittest.TestCase):
         _test_get_matches("say hello", "say {word}",
                           {'entities': {"word": "hello"},
                            'query': 'say hello',
-                           'regex': '^\W*say\W*(?P<word__0>.*?\w.*?)\W*$'
+                           'regex': '^\W*say\W*(?P<word>.*?\w.*?)\W*$'
                            }
                           )
         _test_get_matches("I a going to a party tomorrow tonight",
                           "I am going to {place} tomorrow night",
                           {'entities': {"place": "a party"},
                            'query': 'I a going to a party tomorrow tonight',
-                           'regex': '^\W*I\W+am\W+going\W+to\W*(?P<place__0>.*?\w.*?)\W*tomorrow\W+night\W*$'
+                           'regex': '^\W*I\W+am\W+going\W+to\W*(?P<place>.*?\w.*?)\W*tomorrow\W+night\W*$'
                            }
                           )
         _test_get_matches("say blip blop, i am a bot", "say {word}",
                           {'entities': {"word": "blip blop, i am a bot"},
                            'query': 'say blip blop, i am a bot',
-                           'regex': '^\W*say\W*(?P<word__0>.*?\w.*?)\W*$'
+                           'regex': '^\W*say\W*(?P<word>.*?\w.*?)\W*$'
                            }
                           )
 
