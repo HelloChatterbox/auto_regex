@@ -19,6 +19,16 @@ class AutoRegex(object):
         line = line.replace("{{", "{").replace("}}", "}")
         # trim spaces inside {}: { word } -> {word}
         line = line.replace("{ ", "{").replace(" }", "}")
+        # replace spaces in keyword
+        if "{" in line:
+            e = 0
+            words = []
+            while "{" in line[e:len(line)] and e >= 0:
+                i = line[e:len(line)].find("{") + e
+                e = line[e:len(line)].find("}") + 1 + e
+                words.append(line[i:e].lstrip().rstrip())
+            for word in words:
+                line = line.replace(word, word.replace(" ", "_"))
         return line
 
     def get_expressions(self, lines):

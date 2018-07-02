@@ -29,6 +29,10 @@ class TestAutoRegex(unittest.TestCase):
         _test_get_regex("say {word       }",
                         "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
 
+        # test keyword space cleaning
+        _test_get_regex("say {two words}",
+                        "^\W*say\W*(?P<two_words>.*?\w.*?)\W*$")
+
         # test double
         _test_get_regex("say {{word}}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
 

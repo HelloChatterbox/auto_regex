@@ -68,7 +68,20 @@ outputs
         'regexes': ['^\\W*repeat\\W*(?P<word>.*?\\w.*?)\\W*$']
       }
 
+
+while there is no documentation take a look at the [unittests](test.py) to have an idea of expected behaviour and use cases
+
+
+# Caveats and known bugs
+
+- extra spaces will be removed
+
+- spaces in entities will be replaced with _
+
+    say {two words} -> say {two_words}
     
+- keywords with upper case letter make invalid regex
+
 # Credits
 
 JarbasAI
