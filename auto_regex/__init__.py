@@ -13,6 +13,8 @@ class AutoRegex(object):
         self.regex_lines.append(lines)
 
     def _clean_line(self, line):
+        # make lower case
+        line = line.lower()
         # replace double spaces with single "  " -> " "
         line = " ".join(line.split())
         # if {{ found replace with single { : {{word}} -> {word}

@@ -80,7 +80,7 @@ while there is no documentation take a look at the [unittests](test.py) to have 
 
     say {two words} -> say {two_words}
     
-- keywords with upper case letter make invalid regex
+- sentences become lower case
 
 # Credits
 
