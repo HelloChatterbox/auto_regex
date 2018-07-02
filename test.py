@@ -37,6 +37,7 @@ class TestAutoRegex(unittest.TestCase):
         _test_get_regex("say {{word}}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
 
         # test upper case
+        # TODO FIX ME
         _test_get_regex("say { Word }", "^\W*say\W*(?P<Word>.*?\w.*?)\W*$")
 
     def test_get_entities(self):
