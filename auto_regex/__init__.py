@@ -12,6 +12,15 @@ class AutoRegex(object):
         self.must_compile = True
         self.regex_lines.append(lines)
 
+    def _clean_line(self, line):
+        # replace double spaces with single "  " -> " "
+        line = " ".join(line.split())
+        # if {{ found replace with single { : {{word}} -> {word}
+        line = line.replace("{{", "{").replace("}}", "}")
+        # trim spaces inside {}: { word } -> {word}
+        line = line.replace("{ ", "{").replace(" }", "}")
+        return line
+
     def get_expressions(self, lines):
         regexes = []
         for line in lines:
@@ -88,6 +97,7 @@ class AutoRegex(object):
         return line
 
     def _create_regex_pattern(self, line):
+        line = self._clean_line(line)
         line = self._create_pattern(line)
         replacements = {}
         for ent_name in set(re.findall(r'{([a-z_:]+)}', line)):

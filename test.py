@@ -11,11 +11,29 @@ class TestAutoRegex(unittest.TestCase):
             r = a.get_expressions([line])[0]
             self.assertEqual(r, expected)
 
+        # test positions
         _test_get_regex("say {word}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
         _test_get_regex("{word} is the answer",
                         "^\W*(?P<word>.*?\w.*?)\W*is\W+the\W+answer\W*$")
         _test_get_regex("weather in {city} tomorrow",
                         "^\W*weather\W+in\W*(?P<city>.*?\w.*?)\W*tomorrow\W*$")
+        # test multiple extractions
+        _test_get_regex("{thing} is {attribute}",
+                        "^\W*(?P<thing>.*?\w.*?)\W*is\W*(?P<attribute>.*?\w.*?)\W*$")
+        _test_get_regex("search {music} by {artist} in {place}",
+                        "^\W*search\W*(?P<music>.*?\w.*?)\W*by\W*(?P<artist>.*?\w.*?)\W*in\W*(?P<place>.*?\w.*?)\W*$")
+        # test spaces
+        _test_get_regex("say { word }", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
+        _test_get_regex("say    {    word }",
+                        "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
+        _test_get_regex("say {word       }",
+                        "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
+
+        # test double
+        _test_get_regex("say {{word}}", "^\W*say\W*(?P<word>.*?\w.*?)\W*$")
+
+        # test upper case
+        _test_get_regex("say { Word }", "^\W*say\W*(?P<Word>.*?\w.*?)\W*$")
 
     def test_get_entities(self):
         def _test_get_entities(query, lines, expected):
@@ -39,6 +57,9 @@ class TestAutoRegex(unittest.TestCase):
         _test_get_entities("first option",
                            ["{number} choice", "{number} option"],
                            {"number": "first"})
+        _test_get_entities("set volume to 100 percent",
+                           ["set { thing } to { number } percent"],
+                           {"thing": "volume", "number": "100"})
 
     def test_get_matches(self):
         def _test_get_matches(query, lines, expected):
@@ -67,6 +88,16 @@ class TestAutoRegex(unittest.TestCase):
                           {'entities': {"word": "blip blop, i am a bot"},
                            'query': 'say blip blop, i am a bot',
                            'regexes': ['^\W*say\W*(?P<word>.*?\w.*?)\W*$']
+                           }
+                          )
+        _test_get_matches("search dragula by rob zombie in youtube",
+                          "search {music} by {artist} in {place}",
+                          {'entities': {'artist': 'rob zombie',
+                                        'music': 'dragula',
+                                        'place': 'youtube'},
+                           'query': 'search dragula by rob zombie in youtube',
+                           'regexes': [
+                               '^\W*search\W*(?P<music>.*?\w.*?)\W*by\W*(?P<artist>.*?\w.*?)\W*in\W*(?P<place>.*?\w.*?)\W*$']
                            }
                           )
 
