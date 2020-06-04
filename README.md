@@ -5,87 +5,58 @@ regex automated
 # install
 
 install from pip
-
-       pip install auto_regex
-    
-or install from github with pip
-
-        pip install git+https://github.com/JarbasAl/auto_regex
-           
-or install from source
-
-        git clone https://github.com/JarbasAl/auto_regex
-        cd auto_regex
-        python setup.py install
-        
+```bash
+pip install auto_regex
+```
+  
 or just bundle the python file with your project, it is standalone
         
 # usage
+```python
+from auto_regex import AutoRegex
+rules = [
+    "say {{something}} about {topic}",
+    "say {{something}} please",
+    "{{user}} is my name"
+]
 
-importing the module
+for r in AutoRegex.get_expressions(rules):
+    print(r)
+    """
+    ^\W*say\W+(?P<something>.*?\w.*?)\W+about\W+(?P<topic>.*?\w.*?)\W*$
+    ^\W*say\W+(?P<something>.*?\w.*?)\W+please\W*$
+    ^\W*(?P<user>.*?\w.*?)\W+is\W+my\W+name\W*$
+    """
+for kw in AutoRegex.get_kwords(rules):
+    print(kw)
+    """
+    ['something', 'topic']
+    ['something']
+    ['user']
+    """
 
-    from autoregex import AutoRegex
+rx = AutoRegex()
+rx.add_rules(rules)
 
-    a = AutoRegex()
-  
-generating a regex expression
-
-    texts = ["say {word}", "repeat {word}"]
-    for regex_expression in a.get_expressions(texts):
-      print(regex_expression)
- 
- outputs
- 
-    ^\W*say\W*(?P<word>.*?\w.*?)\W*$
-    ^\W*repeat\W*(?P<word>.*?\w.*?)\W*$
-
-
-extracting entities from regex
-
-      lines= ["say {word}", "repeat {word}"]
-      query = "say hello"
-      a.create_regex(lines)
-      for ent in a.get_entities(query):
-          print(ent)
-          
-outputs
-
-      {'word': 'hello'}
-      
-      
-matching regexes
-      
-      lines= ["say {word}", "repeat {word}"]
-      query = "say i am a bot, blip blop"
-      a.create_regex(lines)
-          for e in a.get_matches(query):
-              print(e)
-              
-outputs
-
-      {
-        'query': 'say i am a bot, blip blop', 
-        'entities': {'word': 'i am a bot, blip blop'}, 
-        'regexes': ['^\\W*repeat\\W*(?P<word>.*?\\w.*?)\\W*$']
-      }
-
-
-while there is no documentation take a look at the [unittests](test.py) to have an idea of expected behaviour and use cases
-
+test = ["say hello please",
+        "Jarbas is my name"]
+for query in test:
+    matches = list(rx.extract(query))
+    print(matches)
+    """
+    [{'something': 'hello'}]
+    [{'user': 'Jarbas'}]
+    """
+```
 
 # Caveats and known bugs
 
 - extra spaces will be removed
 
-- spaces in entities will be replaced with _
-
-    say {two words} -> say {two_words}
+- spaces in entities will be replaced with _ ```say {two words}```  -> ``` say {two_words}``` 
     
-- sentences become lower case
-
 # Credits
 
 JarbasAI
-
 
 Heavily borrowed from [Padaos](https://github.com/MatthewScholefield/padaos)

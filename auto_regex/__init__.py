@@ -1,74 +1,71 @@
 import re
+import string
 
 
-class AutoRegex(object):
+class AutoRegex:
     def __init__(self):
         self.regex_lines, self.entity_lines = [], {}
         self.regexes, self.entities = [], {}
         self.must_compile = True
         self.i = 0
 
-    def create_regex(self, lines):
-        self.must_compile = True
-        self.regex_lines.append(lines)
+    @staticmethod
+    def _partition(line):
+        t = line.partition("{")[2].partition("}")
+        matches = []
+        if t[0]:
+            matches.append(t[0])
+        leftover = t[2]
+        if leftover:
+            matches += AutoRegex._partition(leftover)
+        return matches
 
-    def _clean_line(self, line):
+    @staticmethod
+    def clean_line(line,
+                   whitelist=string.ascii_letters + string.digits + "{}() _"):
+        line = ''.join(c for c in line if c in whitelist)
         # make lower case
-        line = line.lower()
-        # replace double spaces with single "  " -> " "
+        # line = line.lower()
+        # replace double spaces with single space : "  " -> " "
         line = " ".join(line.split())
         # if {{ found replace with single { : {{word}} -> {word}
         line = line.replace("{{", "{").replace("}}", "}")
         # trim spaces inside {}: { word } -> {word}
         line = line.replace("{ ", "{").replace(" }", "}")
-        # replace spaces in keyword
-        if "{" in line:
-            e = 0
-            words = []
-            while "{" in line[e:len(line)] and e >= 0:
-                i = line[e:len(line)].find("{") + e
-                e = line[e:len(line)].find("}") + 1 + e
-                words.append(line[i:e].lstrip().rstrip())
-            for word in words:
-                line = line.replace(word, word.replace(" ", "_"))
+
+        for word in AutoRegex._partition(line):
+            line = line.replace("{" + word + "}",
+                                "{" + word.replace(" ", "_") + "}")
         return line
 
-    def get_expressions(self, lines):
-        regexes = []
+    @staticmethod
+    def get_expressions(lines):
+        if not isinstance(lines, list):
+            lines = [lines]
+        return [AutoRegex.create_regex_pattern(line) for line in lines]
+
+    @staticmethod
+    def get_kwords(lines):
+        if not isinstance(lines, list):
+            lines = [lines]
         for line in lines:
-            regexes.append(self._create_regex_pattern(line))
-        return regexes
+            line = AutoRegex.clean_line(line)
+            yield AutoRegex._partition(line)
 
-    def get_entities(self, query):
-        if self.must_compile:
-            self._compile_regex()
-        for regexes in self.regexes:
-            entities = list(self._calc_entities(query, regexes))
-            if entities:
-                yield min(entities, key=lambda x: sum(map(len, x.values())))
+    @staticmethod
+    def get_unique_kwords(lines):
+        flatten = lambda l: [item for sublist in l for item in sublist]
+        flat_list = flatten(list(AutoRegex.get_kwords(lines)))
+        return list(set(flat_list))
 
-    def get_matches(self, query):
-        if self.must_compile:
-            self._compile_regex()
-        for regexes in self.regexes:
-            entities = self._calc_matches(query, regexes)
-            regex = [str(r).replace("re.compile('", "") \
-                         .replace("', re.IGNORECASE)", "") \
-                         .replace("\\\\", "\\") for r in regexes]
-            for ent in entities:
-                yield {
-                    'query': query,
-                    'entities': ent,
-                    'regexes': regex
-                }
-
-    def _create_pattern(self, line):
+    @staticmethod
+    def _create_pattern(line):
         for pat, rep in (
                 # === Preserve Plain Parentheses ===
                 (r'\(([^\|)]*)\)', r'{~(\1)~}'),  # (hi) -> {~(hi)~}
 
                 # === Convert to regex literal ===
-                (re.escape, None),  # a b:c -> a\ b\:c
+                (r'(\W)', r'\\\1'),
                 (r' {} '.format, None),  # 'abc' -> ' abc '
 
                 # === Unescape Chars for Convenience ===
@@ -85,9 +82,9 @@ class AutoRegex(object):
                 (r'\\\|', r'|'),  # \| -> |
 
                 # === Support Special Symbols ===
-                (r'(?<=\s)\\:0(?=\s)', r'\w+'),
-                (r'#', r'\d'),
-                (r'\d', r'\d'),
+                (r'(?<=\s)\\:0(?=\s)', r'\\w+'),
+                (r'#', r'\\d'),
+                (r'\d', r'\\d'),
 
                 # === Space Word Separations ===
                 (r'(?<!\\)(\w)([^\w\s}])', r'\1 \2'),  # a:b -> a :b
@@ -97,7 +94,7 @@ class AutoRegex(object):
                 (r'(\\[^\w ])', r'\1?'),
 
                 # === Force 1+ Space Between Words ===
-                (r'(?<=\w)(\\\s|\s)+(?=\w)', r'\\W+'),
+                (r'(?<=(\w|\}))(\\\s|\s)+(?=\S)', r'\\W+'),
 
                 # === Force 0+ Space Between Everything Else ===
                 (r'\s+', r'\\W*'),
@@ -108,29 +105,40 @@ class AutoRegex(object):
                 line = re.sub(pat, rep, line)
         return line
 
-    def _create_regex_pattern(self, line):
-        line = self._clean_line(line)
-        line = self._create_pattern(line)
+    @staticmethod
+    def create_regex_pattern(line):
+        line = AutoRegex.clean_line(line)
+        line = AutoRegex._create_pattern(line)
         replacements = {}
         for ent_name in set(re.findall(r'{([a-z_:]+)}', line)):
             replacements[ent_name] = r'(?P<{}>.*?\w.*?)'.format(ent_name)
-        for ent_name, ent in self.entities.items():
-            ent_regex = r'(?P<{}>{})'
-            replacements[ent_name] = ent_regex.format(
-                ent_name.replace(':', '__colon__'), ent)
+
         for key, value in replacements.items():
-            line = line.replace('{' + key + '}', value.format(self.i), 1)
-            self.i += 1
+            line = line.replace('{' + key + '}', value)
         return '^{}$'.format(line)
 
-    def _create_regexes(self, lines):
+    def add_rules(self, lines):
+        if not isinstance(lines, list):
+            lines = [lines]
+        self.must_compile = True
+        self.regex_lines.append(lines)
+
+    def extract(self, query):
+        if self.must_compile:
+            self._compile()
+        for regexes in self.regexes:
+            entities = list(self._match(query, regexes))
+            if entities:
+                yield min(entities, key=lambda x: sum(map(len, x.values())))
+
+    def _compile_rx(self, lines):
         return [
-            re.compile(self._create_regex_pattern(line), re.IGNORECASE)
+            re.compile(self.create_regex_pattern(line), re.IGNORECASE)
             for line in sorted(lines, key=len, reverse=True)
             if line.strip()
         ]
 
-    def _compile_regex(self):
+    def _compile(self):
         self.entities = {
             ent_name: r'({})'.format('|'.join(
                 self._create_pattern(line) for line in lines if line.strip()
@@ -138,11 +146,11 @@ class AutoRegex(object):
             for ent_name, lines in self.entity_lines.items()
         }
         self.regexes = [
-            self._create_regexes(lines) for lines in self.regex_lines
+            self._compile_rx(lines) for lines in self.regex_lines
         ]
         self.must_compile = False
 
-    def _calc_entities(self, query, regexes):
+    def _match(self, query, regexes):
         for regex in regexes:
             match = regex.match(query)
             if match:
@@ -151,11 +159,39 @@ class AutoRegex(object):
                     for k, v in match.groupdict().items() if v
                 }
 
-    def _calc_matches(self, query, regexes):
-        for regex in regexes:
-            match = regex.match(query)
-            if match:
-                yield {
-                    k.rsplit('__', 1)[0]: v
-                    for k, v in match.groupdict().items() if v
-                }
+
+if __name__ == "__main__":
+    rules = [
+        "say {{something}} about {topic}",
+        "say {{something}} please",
+        "{{user}} is my name"
+    ]
+
+    for r in AutoRegex.get_expressions(rules):
+        print(r)
+        """
+        ^\W*say\W+(?P<something>.*?\w.*?)\W+about\W+(?P<topic>.*?\w.*?)\W*$
+        ^\W*say\W+(?P<something>.*?\w.*?)\W+please\W*$
+        ^\W*(?P<user>.*?\w.*?)\W+is\W+my\W+name\W*$
+        """
+    for kw in AutoRegex.get_kwords(rules):
+        print(kw)
+        """
+        ['something', 'topic']
+        ['something']
+        ['user']
+        """
+
+    rx = AutoRegex()
+    rx.add_rules(rules)
+
+    test = ["say hello please",
+            "Jarbas is my name"]
+    for t in test:
+        matches = list(rx.extract(t))
+        print(matches)
+        """
+        [{'something': 'hello'}]
+        [{'user': 'Jarbas'}]
+        """
+
