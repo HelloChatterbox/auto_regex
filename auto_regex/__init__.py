@@ -13,7 +13,7 @@ class AutoRegex:
     def _partition(line):
         t = line.partition("{")[2].partition("}")
         matches = []
-        if t[0]:
+        if t[0] and t[1]:
             matches.append(t[0])
         leftover = t[2]
         if leftover:
@@ -22,10 +22,10 @@ class AutoRegex:
 
     @staticmethod
     def clean_line(line,
-                   whitelist=string.ascii_letters + string.digits + "{}() _"):
+                   whitelist=string.ascii_letters + string.digits + "{} "):
         line = ''.join(c for c in line if c in whitelist)
         # make lower case
-        # line = line.lower()
+        line = line.lower()
         # replace double spaces with single space : "  " -> " "
         line = " ".join(line.split())
         # if {{ found replace with single { : {{word}} -> {word}
@@ -33,9 +33,24 @@ class AutoRegex:
         line = line.replace("{ {", "{").replace("} }", "}")
         # trim spaces inside {}: { word } -> {word}
         line = line.replace("{ ", "{").replace(" }", "}")
-
-        for word in AutoRegex._partition(line):
+        kw = AutoRegex._partition(line)
+        for word in kw:
+            # replace spaces inside {}: {word two} -> {word_two}
             line = line.replace("{" + word + "}",
+                                "{" + word.replace(" ", "_") + "}")
+            # tag kw
+            line = line.replace("{" + word + "}", "$" + word.replace(" ", "_"))
+
+        # balance parentheses
+        for word in kw:
+            wlist = string.ascii_letters + string.digits + " $_"
+            new_line = ""
+            for c in line:
+                if c in wlist:
+                    new_line += c
+                else:
+                    new_line += " "
+            line = new_line.replace("$" + word.replace(" ", "_"),
                                 "{" + word.replace(" ", "_") + "}")
         return line
 
@@ -43,12 +58,14 @@ class AutoRegex:
     def get_expressions(lines):
         if not isinstance(lines, list):
             lines = [lines]
+        lines = [AutoRegex.clean_line(line) for line in lines]
         return [AutoRegex.create_regex_pattern(line) for line in lines]
 
     @staticmethod
     def get_kwords(lines):
         if not isinstance(lines, list):
             lines = [lines]
+
         for line in lines:
             line = AutoRegex.clean_line(line)
             yield AutoRegex._partition(line)
@@ -121,6 +138,7 @@ class AutoRegex:
     def add_rules(self, lines):
         if not isinstance(lines, list):
             lines = [lines]
+        lines = [AutoRegex.clean_line(line) for line in lines]
         self.must_compile = True
         self.regex_lines.append(lines)
 
@@ -165,7 +183,9 @@ if __name__ == "__main__":
     rules = [
         "say {{something}} about {topic}",
         "say {{something}} please",
-        "{{user}} is my name"
+        "{{user}} is}}[]{_ my name",  # unbalanced are ignored
+        '''!""""#$%&/()=???|AS*+ºª-_.:,;^~'`*«»}][{§£@|''', # symbols ignored
+        "test as}{a}}}{      { jihugf }"
     ]
 
     for r in AutoRegex.get_expressions(rules):

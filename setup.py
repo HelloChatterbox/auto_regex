@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='auto_regex',
-    version='0.3.1',
+    version='0.3.2',
     packages=['auto_regex'],
     url='https://github.com/HelloChatterbox/auto_regex',
     license='MIT',
