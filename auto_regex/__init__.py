@@ -30,6 +30,7 @@ class AutoRegex:
         line = " ".join(line.split())
         # if {{ found replace with single { : {{word}} -> {word}
         line = line.replace("{{", "{").replace("}}", "}")
+        line = line.replace("{ {", "{").replace("} }", "}")
         # trim spaces inside {}: { word } -> {word}
         line = line.replace("{ ", "{").replace(" }", "}")
 
