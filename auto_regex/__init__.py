@@ -4,10 +4,9 @@ import string
 
 class AutoRegex:
     def __init__(self):
-        self.regex_lines, self.entity_lines = [], {}
-        self.regexes, self.entities = [], {}
+        self.rules = []
+        self.regexes  = []
         self.must_compile = True
-        self.i = 0
 
     @staticmethod
     def _partition(line):
@@ -22,7 +21,7 @@ class AutoRegex:
 
     @staticmethod
     def clean_line(line,
-                   whitelist=string.ascii_letters + string.digits + "{} "):
+                   whitelist=string.ascii_letters + string.digits + "#{} "):
         line = ''.join(c for c in line if c in whitelist)
         # make lower case
         line = line.lower()
@@ -40,10 +39,9 @@ class AutoRegex:
                                 "{" + word.replace(" ", "_") + "}")
             # tag kw
             line = line.replace("{" + word + "}", "$" + word.replace(" ", "_"))
-
         # balance parentheses
         for word in kw:
-            wlist = string.ascii_letters + string.digits + " $_"
+            wlist = string.ascii_letters + string.digits + " $_#{}"
             new_line = ""
             for c in line:
                 if c in wlist:
@@ -51,7 +49,7 @@ class AutoRegex:
                 else:
                     new_line += " "
             line = new_line.replace("$" + word.replace(" ", "_"),
-                                "{" + word.replace(" ", "_") + "}")
+                                    "{" + word.replace(" ", "_") + "}")
         return line
 
     @staticmethod
@@ -140,13 +138,13 @@ class AutoRegex:
             lines = [lines]
         lines = [AutoRegex.clean_line(line) for line in lines]
         self.must_compile = True
-        self.regex_lines.append(lines)
+        self.rules.append(lines)
 
     def extract(self, query):
         if self.must_compile:
             self._compile()
         for regexes in self.regexes:
-            entities = list(self._match(query, regexes))
+            entities = list(self.match(query, regexes))
             if entities:
                 yield min(entities, key=lambda x: sum(map(len, x.values())))
 
@@ -158,18 +156,13 @@ class AutoRegex:
         ]
 
     def _compile(self):
-        self.entities = {
-            ent_name: r'({})'.format('|'.join(
-                self._create_pattern(line) for line in lines if line.strip()
-            ))
-            for ent_name, lines in self.entity_lines.items()
-        }
         self.regexes = [
-            self._compile_rx(lines) for lines in self.regex_lines
+            self._compile_rx(lines) for lines in self.rules
         ]
         self.must_compile = False
 
-    def _match(self, query, regexes):
+    @staticmethod
+    def match(query, regexes):
         for regex in regexes:
             match = regex.match(query)
             if match:
@@ -181,7 +174,16 @@ class AutoRegex:
 
 if __name__ == "__main__":
     rules = [
+        "{track} from {album}",
+        "{track} by {artist}",
         "say {{something}} about {topic}",
+        "number #",
+
+        "track ## from {album}",
+        "## track from {album}",
+        "track # from {album}",
+        "# track from {album}",
+
         "say {{something}} please",
         "{{user}} is}}[]{_ my name",  # unbalanced are ignored
         '''!""""#$%&/()=???|AS*+ºª-_.:,;^~'`*«»}][{§£@|''', # symbols ignored
@@ -206,8 +208,13 @@ if __name__ == "__main__":
     rx = AutoRegex()
     rx.add_rules(rules)
 
-    test = ["say hello please",
-            "Jarbas is my name"]
+    test = ["something from badass album",
+            "number 42",
+            "track 10 from foo",
+            "6 track from bar",
+            "At The Center Of All Infinity by yuri gagarin",
+           # "Jarbas is my name"
+    ]
     for t in test:
         matches = list(rx.extract(t))
         print(matches)
